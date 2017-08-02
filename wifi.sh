@@ -29,6 +29,8 @@ gp() {
 good () {
 	echo
 	echo "You are good to go!"
+	echo 
+	exit
 }	
 fail () {
 	echo
@@ -43,8 +45,6 @@ tconn () {
 		fail
 	else
 		good
-		echo 
-		exit
 	fi
 }
 
@@ -61,8 +61,6 @@ radio () {
 		fail
 	else
 		good
-		echo
-		exit
 	fi
 }
 
@@ -80,8 +78,6 @@ net () {
 		echo "Network and device restarted."
 	else
 		good
-		echo
-		exit
 	fi
 }
 
@@ -93,14 +89,15 @@ drive () {
 		fail
 		echo "Reloading wireless driver."
 		# My HP Probook should be rtl8723be
+		# Wireless device name
+		wifi=$(nmcli dev status | grep wifi | cut -d' ' -f1)
 		# hardlink to device wlan, may need to make more dynamic.
-		d=$(basename $( readlink /sys/class/net/wlan0/device/driver ))
+		d=$(basename $( readlink /sys/class/net/$wifi/device/driver ))
+		# Remove and re-insert driver
 		sudo rmmod "$d" && sudo modprobe -v "$d"
 		echo "Wireless driver reloaded."
 	else
 		good
-		echo
-		exit
 	fi
 }
 
@@ -112,11 +109,13 @@ nconn () {
 		fail
 		echo "You are currently connected to the following network."
 		echo 
+		# List Current wireless network with info
 		nmcli device wifi list | grep -E '^\*'
 		echo
 		read -p "Would you like to connect to another network? (y|n): " i
 		if [[ "$i" = [Yy] ]]
 		then
+			# Network currently connected to, SSID only.
 			w=$(nmcli device wifi list | grep -E '^\*' | awk 'NR==2' | cut -d' ' -f3)
 			echo "Deleting your current connection: $w"
 			nmcli connection delete id $w
@@ -135,8 +134,6 @@ nconn () {
 		fi
 	else
 		good
-		echo
-		exit
 	fi
 }
 
